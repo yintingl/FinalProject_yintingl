@@ -1,266 +1,199 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<link href="/d3-geomap/css/d3.geomap.css" rel="stylesheet">
-	<script src="/d3-geomap/vendor/d3.geomap.dependencies.min.js"></script>
-	<script src="/d3-geomap/js/d3.geomap.min.js"></script>
-  <title>Yinting's Final Project</title>
-</head>
+<meta charset="utf-8">
+<style>
 
-<div id="map"></div>
-<div id = "bar"></div>
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
 
+.box {
+  font: 10px sans-serif;
+}
+
+.box line,
+.box rect,
+.box circle {
+  fill: steelblue;
+  stroke: #000;
+  stroke-width: 1px;
+}
+
+.box .center {
+  stroke-dasharray: 3,3;
+}
+
+.box .outlier {
+  fill: none;
+  stroke: #000;
+}
+
+.axis {
+  font: 12px sans-serif;
+}
+ 
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+ 
+.x.axis path { 
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+<script src="/data/box.js"></script>
 <script>
+var labels = true; // show the text labels beside individual boxplots?
 
+var margin = {top: 30, right: 50, bottom: 70, left: 50};
+var  width = 800 - margin.left - margin.right;
+var height = 700 - margin.top - margin.bottom;
+	
+var min = Infinity,
+    max = -Infinity;
+	
+// parse in the data	
+d3.csv("/data/wisker.csv", function(error, csv) {
+	// using an array of arrays with
+	// data[n][2] 
+	// where n = number of columns in the csv file 
+	// data[i][0] = name of the ith column
+	// data[i][1] = array of values of ith column
 
+	var data = [];
+	data[0] = [];
+	data[1] = [];
+	data[2] = [];
+	data[3] = [];
+	// add more rows if your csv file has more columns
 
-var map = d3.geomap.choropleth()
-    .geofile('/d3-geomap/topojson/countries/USA.json')
-    .projection(d3.geo.albersUsa)
-    .column('rating')
-	//.data.Year
-    .unitId('fips')
-    .scale(1000)
-    .legend(true);
+	// add here the header of the csv file
+	data[0][0] = "chinese";
+	data[1][0] = "mexican";
+	data[2][0] = "pizza";
+	data[3][0] = "bar";
+	// add more rows if your csv file has more columns
 
-d3.csv('/data/pizzaB.csv', function(error, data) {
-    d3.select('#map')
-        .datum(data)
-        .call(map.draw, map);
+	data[0][1] = [];
+	data[1][1] = [];
+	data[2][1] = [];
+	data[3][1] = [];
+  
+	csv.forEach(function(x) {
+		  var v1 = x.chinese,
+		    v2 = x.mexican,
+		    v3 = x.bar,
+			v4 = x.pizza
+			// add more variables if your csv file has more columns
+			
+		var rowMax = Math.max(v1, Math.max(v2, Math.max(v3,v4)));
+		var rowMin = Math.min(v1, Math.min(v2, Math.min(v3,v4)));
+		  
+		data[0][1].push(v1);
+		data[1][1].push(v2);
+		data[2][1].push(v3);
+		data[3][1].push(v4);
+		 // add more rows if your csv file has more columns
+		 
+		if (rowMax > max) max = rowMax;
+		if (rowMin < min) min = rowMin;	
+	});
+  
+	var chart = d3.box()
+		.whiskers(iqr(0.8))
+		.height(height)	
+		.domain([min, max])
+		.showLabels(labels);
+
+	var svg = d3.select("body").append("svg")
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+		.attr("class", "box")    
+		.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	
+	// the x-axis
+	var x = d3.scale.ordinal()	   
+		.domain( data.map(function(d) { console.log(d); return d[0] } ) )	    
+		.rangeRoundBands([0 , width], 0.7, 0.3); 		
+
+	var xAxis = d3.svg.axis()
+		.scale(x)
+		.orient("bottom");
+
+	// the y-axis
+	var y = d3.scale.linear()
+		.domain([min, max])
+		.range([height + margin.top, 0 + margin.top]);
+	
+	var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+
+	// draw the boxplots	
+	svg.selectAll(".box")	   
+      .data(data)
+	  .enter().append("g")
+		.attr("transform", function(d) { return "translate(" +  x(d[0])  + "," + margin.top + ")"; } )
+      .call(chart.width(x.rangeBand())); 
+	
+	      
+	// add a title
+	svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 + (margin.top / 2))
+        .attr("text-anchor", "middle")  
+        .style("font-size", "18px") 
+        //.style("text-decoration", "underline")  
+        .text("The Best Cuisine Natiowide Ratings");
+ 
+	 // draw y axis
+	svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+		.append("text") // and text1
+		  .attr("transform", "rotate(-90)")
+		  .attr("y", 6)
+		  .attr("dy", ".71em")
+		  .style("text-anchor", "end")
+		  .style("font-size", "16px") 
+		  .text("Ratings");		
+	
+	// draw x axis	
+	svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + (height  + margin.top + 10) + ")")
+      .call(xAxis)
+	  .append("text")             // text label for the x axis
+        .attr("x", (width / 2) )
+        .attr("y",  10 )
+		.attr("dy", ".71em")
+        .style("text-anchor", "middle")
+		.style("font-size", "16px") 
+        .text("cuisine"); 
 });
 
+// Returns a function to compute the interquartile range.
+function iqr(k) {
+  return function(d, i) {
+    var q1 = d.quartiles[0],
+        q3 = d.quartiles[2],
+        iqr = (q3 - q1) * k,
+        i = -1,
+        j = d.length;
+    while (d[++i] < q1 - iqr);
+    while (d[--j] > q3 + iqr);
+    return [i, j];
+  };
+}
+
 </script>
-<script type="text/javascript">
-      
-      //set up canvas and bar sizes
-      var canvasWidth = 1000,
-          canvasHeight = 900,
-          otherMargins = canvasWidth * 0.1,
-          leftMargin = canvasWidth * 0.25,
-          maxBarWidth = canvasHeight - - otherMargins - leftMargin
-          maxChartHeight = canvasHeight - (otherMargins * 2);
-
-      //set up linear scale for data to fit on chart area 
-      var xScale = d3.scale.linear()
-                      .range([0, maxBarWidth]);
-
-      //set up ordinal scale for x variables
-      var yScale = d3.scale.ordinal();
-
-      //add canvas to HTML
-      var chart = d3.select("#bar").append("svg")
-                                  .attr("width",canvasWidth)
-                                  .attr("height", canvasHeight);                       
-
-      //set up x axis                            
-      var xAxis = d3.svg.axis()
-                  .scale(xScale)
-                  .orient("bottom")
-                  .ticks(5);
-
-      //set up y axis
-      var yAxis = d3.svg.axis()
-                  .scale(yScale)
-                  .orient("left")
-                  .tickSize(0);
-
-      //add in data
-      //csv has 4 lines before the data to be graphed
-      //First line - Title of the chart
-      //Second line - Source of the data
-      //Third line - Metadata notes
-      //Fourth line - blank
-      //Fifth line - x variable name, y variable name
-      //Sixth line onwards - x variable value, y variable value
-        d3.xhr("/data/pizzaB.csv").get(function (error, response) {
-          
-          //retrieve data
-          //var dirtyCSV = response.responseText;
-          //var cleanCSV = dirtyCSV.split('\n').slice(4).join('\n');
-          var data = d3.csv.parse(response.responseText)
-          
-          //retrieve title
-         // var dirtyTitle = dirtyCSV.split('\n').slice(0,1).join('\n');
-          //var title = dirtyTitle.slice(0,-1);
-
-              //get variable names
-              var keys = d3.keys(data[0]);
-              var namesTitle = keys[0];
-              var valuesTitle = keys[3];
-
-              //accessing the properties of each object with the variable name through its key
-              var values = function(d) {return +d[valuesTitle];};
-              var names = function(d) {return d[namesTitle];}
-
-              // find highest value
-              var maxValue = d3.max(data, values); 
-              
-              //set y domain by mapping an array of the variables along x axis
-              yScale.domain(data.map(names));
-              
-              //set x domain with max value and use .nice() to ensure the y axis is labelled above the max y value
-              xScale.domain([0, maxValue]).nice(); 
-
-        //set bar width with rangeBands ([x axis width], gap between bars, gap before and after bars) as a proportion of bar width  
-        yScale.rangeBands([0, maxChartHeight], 0.3, 0.8);
-        
-        //set up rectangle elements with attributes based on data
-        var rects = chart.selectAll("rect")
-                        .data(data)
-                        .enter()
-                        .append("rect");
-
-        //set up attributes of svg rectangle elements based on attributes
-        var rectAttributes = rects
-                              .attr("x", leftMargin)
-                              .attr("y", function (d) {return yScale(d[namesTitle]) + otherMargins; })
-                              .attr("width", function (d) {return xScale(d[valuesTitle])})
-                              .attr("height", yScale.rangeBand())
-                              .attr("fill", "#87CEEB")
-                              .on("mouseover", function(d, i) {
-                                
-                                //change fill
-                                d3.select(this)
-                                      .attr("fill", "orange");
-                                
-                                //set up data to show on mouseover
-                                var xPosition = (parseFloat(d3.select(this).attr("width")) + leftMargin + 6);
-                                var yPosition = parseFloat(d3.select(this).attr("y")) + (parseFloat(d3.select(this).attr("height")) / 2);
-                                chart.append("text")
-                                      .attr("id", "tooltip")
-                                      .attr("x", xPosition)
-                                      .attr("y", yPosition)
-                                      .attr("dy", "0.55em")
-                                      .attr("text-anchor", "start")
-                                      .attr("font-family", "sans-serif")
-                                      .attr("font-size", "10px")
-                                      .attr("font-weight", "bold")
-                                      .attr("fill", "black")
-                                      .text(d[valuesTitle]);
-                              })
-                              
-                              //transition out
-                              .on("mouseout", function(d) {
-                                d3.select(this)
-                                  .transition()
-                                  .duration(250)
-                                  .attr("fill", "#87CEEB");
-                                d3.select("#tooltip").remove();
-                              });
-
-        //chart title
-        chart.append("text")
-              .attr("x", canvasWidth / 2)
-              .attr("y", otherMargins / 2)
-              .attr("dy", "0.35em")
-              .attr("text-anchor", "middle")
-              .attr("font-family", "sans-serif")
-              .attr("font-size", "20px")
-              .attr("font-weight", "bold")
-              .attr("fill", "black")
-              .text("State Pizza Rating");
-
-        //append x axis
-        chart.append("g")
-              .attr("transform", "translate(" + leftMargin + ", " + (maxChartHeight + otherMargins) + ")")
-              .attr("text-anchor", "middle")
-              .attr("font-family", "sans-serif")
-              .attr("font-size", "10px")
-              .style("stroke", "black")
-              .style("fill", "none")
-              .style("stroke-width", 1)
-              .style("shape-rendering", "crispEdges")
-              .call(xAxis)
-                .selectAll("text")
-                .attr("stroke", "none")
-                .attr("fill", "black");
-
-        //append y axis
-        chart.append("g")
-              .attr("transform", "translate(" + leftMargin + ", " + otherMargins + ")")
-              .attr("text-anchor", "middle")
-              .attr("font-family", "sans-serif")
-              .attr("font-size", "10px")
-              .style("stroke", "black")
-              .style("fill", "none")
-              .style("stroke-width", 1)
-              .style("shape-rendering", "crispEdges")
-              .call(yAxis)
-              .selectAll("text")
-                //.attr("dx", "-1.15em")
-                .attr("stroke", "none")
-                .attr("fill", "black")
-                //.call(yScale.rangeBand()); //calls wrap function below
-
-          //x axis title        
-          chart.append("text")
-                .attr("x", (maxBarWidth / 2) + leftMargin)
-                .attr("y", canvasHeight - (otherMargins / 3))
-                .attr("text-anchor", "middle")
-                .attr("font-family", "sans-serif")
-                .attr("font-size", "14px")
-                .attr("font-weight", "bold")
-                .attr("fill", "black")
-                .text(valuesTitle);
-
-          //y axis title
-          chart.append("text")
-                .attr("transform", "rotate(-90)")
-                .attr("x", -((maxChartHeight / 2) + otherMargins))
-                .attr("y", leftMargin / 4)
-                .attr("text-anchor", "middle")
-                .attr("font-family", "sans-serif")
-                .attr("font-size", "14px")
-                .attr("font-weight", "bold")
-                .attr("fill", "black")
-                .text(namesTitle);
-        
-        //chart border - not necessary used for reference for the edge of canvas
-        var border = chart.append("rect")
-                          .attr("x", 0)
-                          .attr("y", 0)
-                          .attr("height", canvasHeight)
-                          .attr("width", canvasWidth)
-                          .style("stroke", "black")
-                          .style("fill", "none")
-                          .style("stroke-width", 1);
-
-        //log anything in the console for debugging
-        //console.log(yAxis);
-
-      });
-      
-      //line wrap function adapted from "Wrapping Long Labels" - mike bostock
-      function wrap(text, width) {
-        text.each(function() {
-          var text = d3.select(this),
-            words = text.text().split(/\s+/).reverse(),
-            word,
-            line = [],
-            lineNumber = 0,
-            lineHeight = 1.1, //em
-            y = text.attr("y"),
-            dy = parseFloat(text.attr("dy")),
-            tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
-          while (word = words.pop()) {
-            line.push(word);
-            tspan.text(line.join(" "));
-            if (tspan.node().getComputedTextLength() > width) {
-              line.pop();
-              tspan.text(line.join(" "));
-              line = [word];
-              tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
-            } 
-          }
-        })
-      }
-
-      //while the data is being loaded it turns the strings into a number
-      function type(d) {
-        d[yName] = +d[yName];
-        return d;
-
-      }
-
-    </script>
 </html>
