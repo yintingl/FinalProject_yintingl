@@ -14,7 +14,19 @@ Created on Fri Apr 24 17:14:29 2015
 import csv
 import json
 
-with open('data/wisker.csv', 'w') as csvfile:
+def load_rating_data(category):
+    with open("data/{0}_B.json".format(category),"r") as f:
+        cat = f.read()
+    cat = json.loads(cat)
+    pizza_rating = []
+    for i in xrange(len(cat[category])):
+        score = cat[category][i].values()
+        pizza_rating.append(score[0]["rating"])
+    return pizza_rating
+    
+
+
+with open('data/wisker.csv', 'wb') as csvfile:
 #    fieldnames = ['first_name', 'last_name']
 #    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 #
@@ -23,39 +35,13 @@ with open('data/wisker.csv', 'w') as csvfile:
 #    writer.writerow({'first_name': 'Lovely', 'last_name': 'Spam'})
 #    writer.writerow({'first_name': 'Wonderful', 'last_name': 'Spam'})
     writer = csv.writer(csvfile)
-    writer.writerow(["chinese","mexican","pizza","bar"])
+    writer.writerow(["chinese","mexican","pizza","bars"])
     
-    with open("data/pizza_B.json","r") as f:
-        cat = f.read()
-    cat = json.loads(cat)
-    pizza_rating = []
-    for i in xrange(len(cat["pizza"])):
-        score = cat["pizza"][i].values()
-        pizza_rating.append(score[0]["rating"])
-        
-    with open("data/chinese_B.json","r") as f2:
-        cat2 = f2.read()
-    cat2 = json.loads(cat2)
-    chinese_rating = []
-    for i in xrange(len(cat2["chinese"])):
-        score = cat2["chinese"][i].values()
-        chinese_rating.append(score[0]["rating"])
-    
-    with open("data/mexican_B.json","r") as f3:
-        cat3 = f3.read()
-    cat3 = json.loads(cat3)
-    mexican_rating = []
-    for i in xrange(len(cat3["mexican"])):
-        score = cat3["mexican"][i].values()
-        mexican_rating.append(score[0]["rating"])
-        
-    with open("data/bars_B.json","r") as f4:
-        cat4 = f4.read()
-    cat4 = json.loads(cat4)
-    bar_rating = []
-    for i in xrange(len(cat4["bars"])):
-        score = cat4["bars"][i].values()
-        bar_rating.append(score[0]["rating"])
+    pizza_rating=load_rating_data("pizza")
+    mexican_rating=load_rating_data("mexican")
+    chinese_rating=load_rating_data("chinese")
+    bar_rating=load_rating_data("bars")    
+   
         
     total=[]
     for i in xrange(len(mexican_rating)):
