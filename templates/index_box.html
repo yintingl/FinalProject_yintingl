@@ -55,7 +55,7 @@ var labels = true; // show the text labels beside individual boxplots?
 
 var margin = {top: 30, right: 50, bottom: 70, left: 50};
 var  width = 800 - margin.left - margin.right;
-var height = 700 - margin.top - margin.bottom;
+var height = 750 - margin.top - margin.bottom;
 	
 var min = Infinity,
     max = -Infinity;
@@ -73,34 +73,49 @@ d3.csv("/data/wisker.csv", function(error, csv) {
 	data[1] = [];
 	data[2] = [];
 	data[3] = [];
+	data[4] = [];
+	data[5] = [];
+	data[6] = [];
 	// add more rows if your csv file has more columns
 
 	// add here the header of the csv file
 	data[0][0] = "chinese";
 	data[1][0] = "mexican";
 	data[2][0] = "pizza";
-	data[3][0] = "bar";
+	data[3][0] = "bars";
+	data[4][0] = "bbq"
+	data[5][0] = "southern"
+	data[6][0] = "steak"
 	// add more rows if your csv file has more columns
 
 	data[0][1] = [];
 	data[1][1] = [];
 	data[2][1] = [];
 	data[3][1] = [];
+	data[4][1] = [];
+	data[5][1] = [];
+	data[6][1] = [];
   
 	csv.forEach(function(x) {
 		  var v1 = x.chinese,
 		    v2 = x.mexican,
-		    v3 = x.bar,
-			v4 = x.pizza
+		    v3 = x.pizza,
+			v4 = x.bars
+			v5 = x.bbq
+			v6 = x.southern
+			v7 = x.steak
 			// add more variables if your csv file has more columns
 			
-		var rowMax = Math.max(v1, Math.max(v2, Math.max(v3,v4)));
-		var rowMin = Math.min(v1, Math.min(v2, Math.min(v3,v4)));
+		var rowMax = Math.max(v7, Math.max(v6,Math.max(v5,Math.max(v1, Math.max(v2, Math.max(v3,v4))))));
+		var rowMin = Math.min(v1, Math.min(v2, Math.min(v3,Math.min(v4,Math.min(v5,Math.min(v6,v7))))));
 		  
 		data[0][1].push(v1);
 		data[1][1].push(v2);
 		data[2][1].push(v3);
 		data[3][1].push(v4);
+		data[4][1].push(v5);
+		data[5][1].push(v6);
+		data[6][1].push(v7);
 		 // add more rows if your csv file has more columns
 		 
 		if (rowMax > max) max = rowMax;
@@ -174,7 +189,7 @@ d3.csv("/data/wisker.csv", function(error, csv) {
       .call(xAxis)
 	  .append("text")             // text label for the x axis
         .attr("x", (width / 2) )
-        .attr("y",  10 )
+        .attr("y",  18 )
 		.attr("dy", ".71em")
         .style("text-anchor", "middle")
 		.style("font-size", "16px") 

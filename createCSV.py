@@ -35,12 +35,15 @@ with open('data/wisker.csv', 'wb') as csvfile:
 #    writer.writerow({'first_name': 'Lovely', 'last_name': 'Spam'})
 #    writer.writerow({'first_name': 'Wonderful', 'last_name': 'Spam'})
     writer = csv.writer(csvfile)
-    writer.writerow(["chinese","mexican","pizza","bars"])
+    writer.writerow(["chinese","mexican","pizza","bars","bbq","southern","steak"])
     
     pizza_rating=load_rating_data("pizza")
     mexican_rating=load_rating_data("mexican")
     chinese_rating=load_rating_data("chinese")
-    bar_rating=load_rating_data("bars")    
+    bar_rating=load_rating_data("bars") 
+    bbq_rating=load_rating_data("southern")
+    southern_rating=load_rating_data("bbq")
+    steak_rating= load_rating_data("steak")
    
         
     total=[]
@@ -50,6 +53,9 @@ with open('data/wisker.csv', 'wb') as csvfile:
         temp.append(mexican_rating[i])
         temp.append(pizza_rating[i])
         temp.append(bar_rating[i])
+        temp.append(bbq_rating[i])
+        temp.append(southern_rating[i])
+        temp.append(steak_rating[i])
         total.append(temp)
     writer.writerows(total)
      
